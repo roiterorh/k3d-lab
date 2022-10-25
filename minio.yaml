@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: storage
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: minio
+  namespace: kube-system
+spec:
+  repo: https://charts.min.io/
+  chart: minio
+  targetNamespace: storage
+  valuesContent: |-
+    clusterDomain: cluster.local
+    mode: standalone #distributed ## other supported values are "standalone", "gateway"
+    rootUser: "minio"
+    rootPassword: "minioadmin"
+    replicas: 2
+    persistence:
+      enabled: true
+      storageClass: "local-path"
+      accessMode: ReadWriteOnce
+      size: 10Gi
+    ingress:
+      enabled: true
+      hosts:
+        - minio-svc.localtest.me
+      tls: 
+       - hosts:
+           - minio-svc.localtest.me
+    consoleIngress:
+      enabled: true
+      hosts:
+        - minio.localtest.me
+      tls: 
+       - hosts:
+           - minio.localtest.me
+    users:
+      - accessKey: console
+        secretKey: console123
+        policy: consoleAdmin
+    buckets:
+      - name: default
+        policy: public
+        purge: true
+    environment:
+      ## Please refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html
+      ## MINIO_SUBNET_LICENSE: "License key obtained from https://subnet.min.io"
+      ## MINIO_BROWSER: "off"
+      #       export MINIO_PROMETHEUS_URL="https://prometheus.example.net"
+      # MINIO_PROMETHEUS_JOB_ID
+    metrics:
+      serviceMonitor:
+        enabled: true
+        # scrape each node/pod individually for additional metrics
+        includeNode: true 
+        public: true
+        additionalLabels: {}
+        # for node metrics
+        relabelConfigs: {}
+        # for cluster metrics
+        relabelConfigsCluster: {}
+          # metricRelabelings:
+          #   - regex: (server|pod)
+          #     action: labeldrop
+        # namespace: monitoring
+        # interval: 30s
+        # scrapeTimeout: 10s
+

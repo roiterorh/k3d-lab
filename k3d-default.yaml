@@ -1,0 +1,39 @@
+apiVersion: k3d.io/v1alpha4
+kind: Simple 
+metadata:
+  name: cluster 
+servers: 1 
+agents: 2 
+image: rancher/k3s:v1.24.4-k3s1
+network: k3d-cluster
+# volumes: # repeatable flags are represented as YAML lists
+#   - volume: 
+#     nodeFilters:
+#       - server:*
+#       - agent:*
+
+registries: # define how registries should be created or used
+  create: # creates a default registry to be used with the cluster; same as `--registry-create registry.localhost`
+    name: registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5000"
+ports:
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+hostAliases: 
+  - ip: 8.8.8.8
+  - ip: 1.1.1.1
+    hostnames:
+      - cloud.flare.dns
+options:
+  k3d:
+    wait: true 
+  k3s: 
+    nodeLabels:
+      - label: role=agent
+        nodeFilters:
+          - agent:*
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true 
