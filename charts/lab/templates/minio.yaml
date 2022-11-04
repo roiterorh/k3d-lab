@@ -1,0 +1,56 @@
+{{ if .Values.global.minio.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: storage
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: minio
+  namespace: kube-system
+spec:
+  repo: https://charts.min.io/
+  chart: minio
+  targetNamespace: storage
+  valuesContent: |-
+    clusterDomain: cluster.local
+    mode: standalone 
+    rootUser: "minio"
+    rootPassword: "minioadmin"
+    replicas: 2
+    persistence:
+      enabled: true
+      storageClass: "local-path"
+      accessMode: ReadWriteOnce
+      size: 10Gi
+    ingress:
+      enabled: true
+      hosts:
+        - minio-svc.{{ .Values.global.domain }}
+      tls: 
+       - hosts:
+           - minio-svc.{{ .Values.global.domain }}
+    consoleIngress:
+      enabled: true
+      hosts:
+        - minio.{{ .Values.global.domain }}
+      tls: 
+       - hosts:
+           - minio.{{ .Values.global.domain }}
+    users:
+      - accessKey: console
+        secretKey: console123
+        policy: consoleAdmin
+    buckets:
+      - name: default
+        policy: public
+        purge: true
+    environment:
+      MINIO_PROMETHEUS_URL: "http://prometheus-server.monitoring"
+      MINIO_PROMETHEUS_JOB_ID: kubernetes-pods
+    podAnnotations:
+      prometheus.io/path: /minio/v2/metrics/cluster
+      prometheus.io/port: "9000"
+      prometheus.io/scrape: "true"
+{{- end }}

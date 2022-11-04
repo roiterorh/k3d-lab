@@ -1,0 +1,48 @@
+{{ if .Values.global.helm_cabin.enabled }}
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: helm-cabin
+  namespace: kube-system
+spec:
+  repo: https://nick-triller.github.io/helm-cabin/
+  chart: helm-cabin
+  targetNamespace: tools
+  # valuesContent: |-
+  #   ingress:
+  #     enabled: true
+  #     hosts:
+  #       - host: helm-cabin.{{ .Values.global.domain }}
+  #         paths:
+  #           - path: /
+  #             pathType: ImplementationSpecific
+  #     tls: 
+  #      - hosts:
+  #             - helm-cabin.{{ .Values.global.domain }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: helm-cabin
+  namespace: tools
+spec:
+  ingressClassName: {{.Values.global.ingress_controller }}
+  rules:
+  - host: helm-cabin.{{ .Values.global.domain }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: helm-cabin
+            port:
+              number: 8080
+        path: /
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - helm-cabin.{{ .Values.global.domain }}
+
+
+
+{{- end }}

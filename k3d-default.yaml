@@ -3,7 +3,7 @@ kind: Simple
 metadata:
   name: cluster 
 servers: 1 
-agents: 2 
+agents: 3
 image: rancher/k3s:v1.24.4-k3s1
 network: k3d-cluster
 # volumes: # repeatable flags are represented as YAML lists
@@ -11,7 +11,6 @@ network: k3d-cluster
 #     nodeFilters:
 #       - server:*
 #       - agent:*
-
 registries: # define how registries should be created or used
   create: # creates a default registry to be used with the cluster; same as `--registry-create registry.localhost`
     name: registry.localhost
@@ -22,7 +21,6 @@ ports:
     nodeFilters:
       - loadbalancer
 hostAliases: 
-  - ip: 8.8.8.8
   - ip: 1.1.1.1
     hostnames:
       - cloud.flare.dns
@@ -34,6 +32,16 @@ options:
       - label: role=agent
         nodeFilters:
           - agent:*
+    extraArgs: 
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
+      - arg:  --node-taint=CriticalAddonsOnly=true:NoExecute
+        nodeFilters:
+          - server:*
+
+
+ 
   kubeconfig:
     updateDefaultKubeconfig: true
     switchCurrentContext: true 

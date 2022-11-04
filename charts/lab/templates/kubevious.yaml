@@ -1,0 +1,27 @@
+{{ if .Values.global.kubevious.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubevious
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kubevious
+  namespace: kube-system
+spec:
+  repo: https://helm.kubevious.io
+  chart: kubevious
+  targetNamespace: kubevious
+  valuesContent: |-
+    ingress:
+      enabled: true
+      hosts:
+        - host: kubevious.{{ .Values.global.domain }}
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+      tls: 
+       - hosts:
+              - kubevious.{{ .Values.global.domain }}
+{{- end }}

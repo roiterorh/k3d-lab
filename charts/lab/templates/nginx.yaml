@@ -1,0 +1,27 @@
+{{if eq .Values.global.ingress_controller "nginx"}}
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: nginx-ingress
+  namespace: kube-system
+spec:
+  repo: https://helm.nginx.com/stable
+  chart: nginx-ingress
+  targetNamespace: ingress
+  valuesContent: |-
+    controller:
+      nginxDebug: true
+      logLevel: 4
+      wildcardTLS:
+        secret: "ingress/ssl"
+      defaultTLS:
+        secret: "ingress/ssl"
+      ingressClass: nginx
+      setAsDefaultIngress: true
+      service:
+        httpsPort:
+          nodePort: "443"
+
+      healthStatus: true
+
+{{end}}

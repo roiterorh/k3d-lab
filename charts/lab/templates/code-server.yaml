@@ -1,0 +1,23 @@
+{{ if .Values.global.code_server.enabled }}
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: code-server
+  namespace: kube-system
+spec:
+  repo: https://roiterorh.github.io/helm
+  chart: code-server
+  targetNamespace: tools
+  valuesContent: |-
+    ingress:
+      enabled: true
+      className: {{.Values.global.ingress_controller }}
+      hosts:
+        - host: code.{{ .Values.global.domain }}
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+      tls: 
+        - hosts:
+            - code.{{ .Values.global.domain }}
+{{end}}

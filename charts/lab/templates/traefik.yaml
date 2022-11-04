@@ -1,0 +1,87 @@
+{{if eq .Values.global.ingress_controller "traefik"}}
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  repo: https://helm.traefik.io/traefik
+  chart: traefik
+  targetNamespace: ingress
+  valuesContent: |-
+    dashboard:
+      enabled: true
+    experimental:
+      plugins:
+        enabled: true
+    global:
+      systemDefaultRegistry: ""
+    image:
+      name: rancher/mirrored-library-traefik
+      tag: 2.6.2
+    ingressClass:
+      enabled: true
+      isDefaultClass: true
+    podAnnotations:
+      prometheus.io/port: "8082"
+      prometheus.io/scrape: "true"
+    ports:
+      traefik:
+        expose: true
+      websecure:
+        tls:
+          enabled: true
+    priorityClassName: system-cluster-critical
+    providers:
+      kubernetesIngress:
+        publishedService:
+          enabled: true
+    rbac:
+      enabled: true
+    service:
+      ipFamilyPolicy: PreferDualStack
+    tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/control-plane
+      operator: Exists
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Exists
+    # logs:
+    #   general:
+    #     format: json
+    #     level: DEBUG
+    #   access:
+    #     enabled: true
+    tlsStore: 
+      default:
+        defaultCertificate:
+          secretName: ssl
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: dashboard
+#   namespace: kube-system
+# spec:
+#   entryPoints:
+#     - websecure
+#   routes:
+#     - match: Host(`traefik.localtest.me`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+#       kind: Rule
+#       services:
+#         - name: api@internal
+#           kind: TraefikService
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: TLSStore
+# metadata:
+#   name: default
+#   namespace: default
+
+# spec:
+#   defaultCertificate:
+#     secretName: ssl
+{{end}}

@@ -1,0 +1,48 @@
+
+{{ if .Values.global.elasticsearch.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: databases
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: elasticsearch
+  namespace: kube-system
+spec:
+  repo: https://helm.elastic.co
+  chart: elasticsearch
+  targetNamespace: databases
+  valuesContent: |-
+    antiAffinity: "soft"
+    esJavaOpts: "-Xmx128m -Xms128m"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "512M"
+      limits:
+        cpu: "1000m"
+        memory: "512M"
+    volumeClaimTemplate:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-path"
+      resources:
+        requests:
+          storage: 100M
+    ingress:
+      enabled: true
+      ingressClass: {{.Values.global.ingress_controller }}
+      pathtype: ImplementationSpecific
+      className: traefik
+      hosts:
+        - host: elasticsearch.{{ .Values.global.domain }}
+          paths:
+            - path: /
+      tls: 
+       - hosts:
+           - elasticsearch.{{ .Values.global.domain }}
+
+
+
+{{end}}

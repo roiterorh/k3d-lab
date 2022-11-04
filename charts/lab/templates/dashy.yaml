@@ -1,0 +1,139 @@
+{{ if .Values.global.dashy.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dashy
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: dashy
+  namespace: kube-system
+spec:
+  repo: https://roiterorh.github.io/helm
+  chart: dashy
+  targetNamespace: tools
+  valuesContent: |-
+    # Page meta info, like heading, footer text and nav links
+    pageInfo:
+      title: "Hello, Dev||Ops"
+      description: "General browser startpage"
+      logo: "https://i.ibb.co/71WyyzM/little-bot-3.png"
+
+    # Optional app settings and configuration
+    appConfig:
+      hideComponents:
+        hideSearch: true
+        hideHeading: true
+        hideNav: true
+        hideSettings: true
+        hideFooter: true
+      webSearch:
+        disableWebSearch: true
+        
+      preventWriteToDisk: true
+      showSplashScreen: true
+      enableServiceWorker: true
+      statusCheck: true
+      statusCheckInterval: 60
+      colCount: 2
+      theme: colorful
+      fontAwesomeKey: c94dc2b452
+      # customCss: '.clock p.time { font-size: 3rem !important; }'
+      layout: sidebar
+      iconSize: large
+    sections:
+      - name: Host
+        icon: mdi-penguin
+        displayData:
+          collapsed: false
+          cols: 1
+        widgets:
+        - type: clock
+        # - type: public-ip
+
+      - name: Applications
+        icon: mdi-kubernetes
+        items:
+{{if .Values.global.kubernetes_dashboard.enabled }}
+        - title: K8s dashboard
+          icon: hl-kubernetes-dashboard
+          url: https://dash.{{ .Values.global.domain }}
+          description: unsecure
+          statusCheckUrl: http://kubernetes-dashboard.kubernetes-dashboard:8080/health
+          tags: [hosted, kubernetes, dashboard]
+{{end}}
+
+{{if eq .Values.global.ingress_controller "traefik"}}
+        - title: Traefik
+          icon: hl-traefik
+          description: unsecure
+          url: https://traefik.{{ .Values.global.domain }}/dashboard/
+          statusCheckUrl: http://traefik.ingress:9000/ping
+          tags: [hosted, traefik, dashboard]
+{{end}}
+{{ if .Values.global.minio.enabled }}
+        - title: Minio
+          icon: hl-minio
+          url: https://minio.{{ .Values.global.domain }}
+          description: minio/minioadmin
+          statusCheckUrl: http://minio.storage:9000/minio/health/live
+          tags: [hosted, traefik, dashboard]
+{{end}}
+{{ if .Values.global.kubevious.enabled }}
+        - title: Kubevious
+          icon: https://kubevious.io/img/logo.png
+          url: https://kubevious.{{ .Values.global.domain }}
+          description: unsecure
+          statusCheckUrl: http://kubevious-ui-clusterip.kubevious
+          tags: [hosted, traefik, dashboard]
+{{end}}
+{{ if .Values.global.code_server.enabled }}
+
+        - title: Code
+          icon: hl-vscode
+          url: https://code.{{ .Values.global.domain }}
+          description: unsecure
+          statusCheckUrl: http://code-server.tools:8080/healthz
+          tags: [hosted, traefik, dashboard]
+{{end}}
+{{ if .Values.global.prometheus.enabled }}
+
+        - title: Prometheus
+          icon: hl-prometheus
+          url: https://prometheus.{{ .Values.global.domain }}
+          description: unsecure
+          statusCheckUrl: http://prometheus-server.monitoring/-/healthy
+          tags: [hosted, prometheus, dashboard]
+
+        - title: Grafana
+          icon: hl-grafana
+          url: https://grafana.{{ .Values.global.domain }}
+          description: unsecure
+          statusCheckUrl: http://grafana.default/healthz
+          tags: [hosted, traefik, dashboard]
+
+      - name: Latest CVE vulnerabilities
+        displayData:
+          collapsed: false
+        widgets:
+        - type: cve-vulnerabilities
+          useProxy: true
+{{end}}
+
+
+    ingress:
+      className: {{.Values.global.ingress_controller }}
+
+      enabled: true
+      hosts:
+        - host: {{ .Values.global.domain }}
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+      tls: 
+      - hosts:
+          - {{ .Values.global.domain }}
+
+
+{{end}}

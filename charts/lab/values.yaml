@@ -1,0 +1,22 @@
+
+
+global:
+  domain: localtest.me
+  kubernetes_dashboard:
+    enabled: true
+  minio:
+    enabled: true
+  code_server:
+    enabled: true
+  dashy:
+    enabled: true
+  elasticsearch:
+    enabled: true
+  kubevious:
+    enabled: true
+  prometheus:
+    enabled: false
+  helm_cabin:
+    enabled: true
+
+  ingress_controller: traefik #traefik #nginx

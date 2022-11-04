@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homepage-deployment
+  labels:
+    app: homepage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homepage
+  template:
+    metadata:
+      labels:
+        app: homepage
+    spec:
+
+      # initContainers:
+      #   - name: empty-dir
+      #     image: alpine
+      #     volumeMounts:
+      #       - name: homepage-config
+      #         mountPath: '/app/config'
+      # containers:
+      #   - name: nginx
+      #     image: nginx
+      #     ports:
+      #       - name: http
+      #         containerPort: 80
+      #     volumeMounts:
+      #       - name: web
+      #         mountPath: '/usr/share/nginx/html'
+
+
+
+      containers:
+      - name: homepage
+        image: ghcr.io/benphelps/homepage:latest
+        env:
+          - name: LOG_LEVEL
+            value: debug        
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+          # - name: homepage-config
+          #   mountPath: '/app/config'
+          - name: homepage-configs
+            mountPath: /app/config/widgets.yaml
+            subPath: widgets.yaml
+          - name: homepage-configs
+            mountPath: /app/config/settings.yaml
+            subPath: settings.yaml
+        # lifecycle:
+        #   postStart:
+        #     exec:
+        #       command:
+        #         ['/bin/sh', '-c', 'mkdir /app/config']
+      volumes:
+        - name: homepage-configs
+          configMap:
+            name: homepage-config
+        # - name: homepage-config
+        #   emptyDir: {}
+
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homepage-service
+spec:
+  selector:
+    app: homepage
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage-ingress
+spec:
+  rules:
+  - host: homepage.localtest.me
+    http:
+      paths:
+      - backend:
+          service:
+            name: homepage-service
+            port:
+              number: 3000
+        path: /
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - homepage.localtest.me
